@@ -42,10 +42,14 @@ public class GenericTokenParser {
     char[] src = text.toCharArray();
     int offset = 0;
     final StringBuilder builder = new StringBuilder();
+    // 匹配到 openToken 和 closeToken 之间的表达式
     StringBuilder expression = null;
     while (start > -1) {
+      // 转义字符
       if (start > 0 && src[start - 1] == '\\') {
         // this open token is escaped. remove the backslash and continue.
+        // 因为 openToken 前面一个位置是 \ 转义字符，所以忽略 \
+        // 添加 [offset, start - offset - 1] 和 openToken 的内容，添加到 builder 中
         builder.append(src, offset, start - offset - 1).append(openToken);
         offset = start + openToken.length();
       } else {
@@ -55,16 +59,21 @@ public class GenericTokenParser {
         } else {
           expression.setLength(0);
         }
+        // 添加 offset 和 openToken 之间的内容，添加到 builder 中
         builder.append(src, offset, start - offset);
         offset = start + openToken.length();
+        // 寻找结束的 closeToken 的位置
         int end = text.indexOf(closeToken, offset);
         while (end > -1) {
           if (end > offset && src[end - 1] == '\\') {
             // this close token is escaped. remove the backslash and continue.
+            // 因为 endToken 前面一个位置是 \ 转义字符，所以忽略 \
+            // 添加 [offset, end - offset - 1] 和 endToken 的内容，添加到 builder 中
             expression.append(src, offset, end - offset - 1).append(closeToken);
             offset = end + closeToken.length();
             end = text.indexOf(closeToken, offset);
           } else {
+            // 添加 [offset, end - offset] 的内容，添加到 builder 中
             expression.append(src, offset, end - offset);
             break;
           }
@@ -74,6 +83,7 @@ public class GenericTokenParser {
           builder.append(src, start, src.length - start);
           offset = src.length;
         } else {
+          //将 expression 提交给 handler 处理 ，并将处理结果添加到 builder 中
           builder.append(handler.handleToken(expression.toString()));
           offset = end + closeToken.length();
         }
